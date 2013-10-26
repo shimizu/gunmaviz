@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Hello D3</title>
+<style>
+html, body, svg {
+    width: 100%;
+    height: 100%;
+}
+
+</style>
+
+</head>
+<body>
+<svg></svg>
+
+<script src="d3.v3.min.js"></script>
+<script>
+d3.json('dataset/japank.geojson', function(json){
+    d3.csv('dataset/jinkou.csv', function(csv){
+        d3main(json, csv);    
+    });
+});
+
+
+function d3main(json, csv){
+    var projection = d3.geo.mercator()
+        .center([139, 35])
+        .scale(1200);
+    var path = d3.geo.path().projection(projection);
+    
+    var svg = d3.select('svg');
+    
+    var g = svg.append('g')
+        .attr("transform", "translate("+[-100, 100]+")")
+    
+    var map = g.selectAll('path')
+        .data(json.features)
+        .enter()
+        .append('path')
+        .attr({
+            "class":function(d){ return d.properties.PREF},
+            d: path,
+            stroke: 'blue'
+        })
+    
+    var min = d3.min(csv, function(d){ return +d['人口']});
+    var median = d3.median(csv, function(d){ return +d['人口'] })
+    var max = d3.max(csv, function(d){ return +d['人口'] });
+
+    var colorScale = d3.scale.linear()
+            .domain([min, median, max])
+            .range(["blue", "green" , "red"]); 
+    
+    csv.map(function(d){
+        var color = colorScale(d['人口']);
+        d3.select("."+d['都道府県']).attr("fill", color);
+    });
+    
+}
+</script>
+</body>
+</html>
