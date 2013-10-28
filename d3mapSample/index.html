@@ -17,45 +17,52 @@ html, body, svg {
 
 <script src="d3.v3.min.js"></script>
 <script>
-d3.json('dataset/japank.geojson', function(json){
+//データセットの読み込み
+d3.json('dataset/japank.geojson', function(geojson){
     d3.csv('dataset/jinkou.csv', function(csv){
-        d3main(json, csv);    
+        d3main(geojson, csv);    
     });
 });
 
 
-function d3main(json, csv){
-    var projection = d3.geo.mercator()
+function d3main(geojson, csv){
+    //投影法
+    var projection = d3.geo.mercator() //メルカトル図を使用
         .center([139, 35])
         .scale(1200);
+	
+    //
     var path = d3.geo.path().projection(projection);
     
     var svg = d3.select('svg');
     
     var g = svg.append('g')
-        .attr("transform", "translate("+[-100, 100]+")")
+        .attr("transform", "translate("+[-100, 100]+")"); //地図の表示位置調整
     
+    //地図を描く
     var map = g.selectAll('path')
-        .data(json.features)
+        .data(geojson.features) //geojsonのfeaturesオブジェクトをデータとして渡す
         .enter()
         .append('path')
         .attr({
             "class":function(d){ return d.properties.PREF},
-            d: path,
+            d: path, //d属性にpath関数を指定 function(d){ return path(d) } を省略
             stroke: 'blue'
         })
     
-    var min = d3.min(csv, function(d){ return +d['人口']});
-    var median = d3.median(csv, function(d){ return +d['人口'] })
+    //csvから人口データの最少値と最大値を取得
+    var min = d3.min(csv, function(d){ return +d['人口'] });
     var max = d3.max(csv, function(d){ return +d['人口'] });
 
+    //カラースケール関数を生成
     var colorScale = d3.scale.linear()
-            .domain([min, median, max])
-            .range(["blue", "green" , "red"]); 
+            .domain([min, max])
+            .range(["white", "red"]); 
     
+    //地図に色を塗る
     csv.map(function(d){
-        var color = colorScale(d['人口']);
-        d3.select("."+d['都道府県']).attr("fill", color);
+        var color = colorScale(d['人口']); //カラースケールを通して人口の値から色値を生成
+        d3.select("."+d['都道府県']).attr("fill", color); //クラス名「.<都道府県>」のpathにカラーを反映
     });
     
 }
